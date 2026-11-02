@@ -3,12 +3,11 @@
 set -e
 cd /opt/loveimage
 git fetch -q origin main
-# .env holds the only copy of DB_PASSWORD: a commit must never replace it.
-if git cat-file -e FETCH_HEAD:.env 2>/dev/null; then
-  echo '.env is in git, deploy stopped' >&2
-  exit 1
-fi
+# The repo tracks .env with public keys, the server's copy has its own keys and the only DB_PASSWORD: a reset must not replace it.
+# An .env.keep left by a crash is the server's copy, so it is never overwritten.
+[ -e .env.keep ] || cp -p .env .env.keep
 git reset -q --hard FETCH_HEAD
+mv .env.keep .env
 git clean -fdq -e .env
 git log -1 --format='Deploying %h %s'
 # Only these two: a bare "up -d" would start Caddy and open ports 80 and 443 before the site is ready.
