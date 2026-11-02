@@ -9,7 +9,7 @@ from loveimage import llm
 
 pytestmark = pytest.mark.anyio
 
-PHOTO = {"one_real_face": True, "may_be_minor": False, "unsafe": False, "famous_person": False, "written_request": False}
+PHOTO = {"one_real_face": True, "apparent_age": 30, "unsafe": False, "famous_person": False, "written_request": False}
 GOOD = {"photo_1": PHOTO, "photo_2": PHOTO, "wish_unsafe": False, "scene_en": "a walk in an old town, warm light"}
 
 
@@ -64,8 +64,8 @@ def test_good_verdict_has_no_reject_reason():
 @pytest.mark.parametrize(
     "changes, reason",
     [
-        ({"photo_1": photo(may_be_minor=True)}, "minor"),
-        ({"photo_2": photo(may_be_minor=True)}, "minor"),
+        ({"photo_1": photo(apparent_age=17)}, "minor"),
+        ({"photo_2": photo(apparent_age=17)}, "minor"),
         ({"photo_1": photo(unsafe=True)}, "unsafe_photo"),
         ({"photo_2": photo(unsafe=True)}, "unsafe_photo"),
         ({"photo_1": photo(one_real_face=False)}, "no_face_1"),
@@ -74,11 +74,16 @@ def test_good_verdict_has_no_reject_reason():
         ({"photo_2": photo(written_request=True)}, "photo_text"),
         ({"wish_unsafe": True}, "unsafe_wish"),
         # A minor outranks everything else: the page must not suggest another photo of the same child.
-        ({"photo_1": photo(one_real_face=False), "photo_2": photo(may_be_minor=True, unsafe=True)}, "minor"),
+        ({"photo_1": photo(one_real_face=False), "photo_2": photo(apparent_age=17, unsafe=True)}, "minor"),
     ],
 )
 def test_reject_reasons(changes, reason):
     assert verdict(**changes).reject_reason("a walk") == reason
+
+
+@pytest.mark.parametrize("age, reason", [(17, "minor"), (18, None), (45, None), (99, None)])
+def test_age_threshold(age, reason):
+    assert verdict(photo_1=photo(apparent_age=age)).reject_reason("a walk") == reason
 
 
 @pytest.mark.parametrize(
@@ -174,7 +179,8 @@ async def test_passing_failures_are_transient(settings, response):
     [
         "no json here",
         json.dumps(GOOD | {"wish_unsafe": "no"}),
-        json.dumps(GOOD | {"photo_1": PHOTO | {"may_be_minor": "false"}}),
+        json.dumps(GOOD | {"photo_1": PHOTO | {"apparent_age": "30"}}),
+        json.dumps(GOOD | {"photo_1": PHOTO | {"apparent_age": None}}),
         json.dumps({k: v for k, v in GOOD.items() if k != "photo_2"}),
     ],
 )

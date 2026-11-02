@@ -12,7 +12,7 @@ from loveimage import handlers, imaging, prompts, store, worker
 
 pytestmark = pytest.mark.anyio
 
-PHOTO = {"one_real_face": True, "may_be_minor": False, "unsafe": False, "famous_person": False, "written_request": False}
+PHOTO = {"one_real_face": True, "apparent_age": 30, "unsafe": False, "famous_person": False, "written_request": False}
 SCENE = "a quiet walk in an old town"
 GOOD = {"photo_1": PHOTO, "photo_2": PHOTO, "wish_unsafe": False, "scene_en": SCENE}
 WISH = "in an old town"
@@ -146,8 +146,8 @@ async def test_an_empty_wish_draws_a_preset_and_ignores_the_models_scene(pool, r
 @pytest.mark.parametrize(
     "verdict, reason",
     [
-        (GOOD | {"photo_1": PHOTO | {"may_be_minor": True}}, "minor"),
-        (GOOD | {"photo_2": PHOTO | {"may_be_minor": True}}, "minor"),
+        (GOOD | {"photo_1": PHOTO | {"apparent_age": 17}}, "minor"),
+        (GOOD | {"photo_2": PHOTO | {"apparent_age": 17}}, "minor"),
         (GOOD | {"photo_2": PHOTO | {"unsafe": True}}, "unsafe_photo"),
         (GOOD | {"photo_1": PHOTO | {"one_real_face": False}}, "no_face_1"),
         (GOOD | {"photo_2": PHOTO | {"one_real_face": False}}, "no_face_2"),

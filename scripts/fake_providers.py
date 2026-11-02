@@ -115,7 +115,7 @@ async def chat():
     if mode == "llm_down":
         return JSONResponse({"error": "down"}, status_code=503)
     await asyncio.sleep(ANALYSIS_SECONDS)
-    photo = {"one_real_face": True, "may_be_minor": mode == "minor", "unsafe": False, "famous_person": False, "written_request": False}
+    photo = {"one_real_face": True, "apparent_age": 15 if mode == "minor" else 30, "unsafe": False, "famous_person": False, "written_request": False}
     verdict = {
         "photo_1": photo,
         "photo_2": {**photo, "one_real_face": mode != "no_face"},

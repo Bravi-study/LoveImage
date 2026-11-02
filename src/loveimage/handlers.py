@@ -33,6 +33,8 @@ async def analyze(ctx, row):
     else:
         reason = verdict.reject_reason(row["wish"])
         if reason:
+            # The photos are deleted next, so this line is all that explains a refusal later.
+            log.info("analysis of %s rejected: %s, apparent ages %d and %d", shoot_id, reason, verdict.photo_1.apparent_age, verdict.photo_2.apparent_age)
             await store.finish_shoot(ctx.pool, shoot_id, "rejected", reason)
             # After the database: a crash between the two leaves a spare folder, not a broken shoot.
             await asyncio.to_thread(files.remove_folder, ctx.settings.shoot_dir(shoot_id))
