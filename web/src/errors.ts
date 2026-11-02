@@ -11,12 +11,46 @@ export const ACCEPT = "image/jpeg,image/png,image/webp,image/heic,image/heif,.jp
 const FORMATS = "JPEG, PNG, WEBP или HEIC";
 const OFFLINE = "Нет связи с сервером.";
 const KEPT = "Снимки и текст на месте, попробуйте ещё раз.";
-const UNAVAILABLE = "Сервис временно недоступен. Попробуйте чуть позже.";
 const NICKNAME = /^[0-9A-Za-zА-Яа-яЁё]{3,20}$/;
-/** A status alone means something in front of the app answered: a proxy or the dev server. */
-export const codeText = (...code: (number | string | null)[]) => `Код ошибки: ${code.filter(Boolean).join(" ")}.`;
-const failed = (e: HttpError) => `Что-то пошло не так на нашей стороне. ${codeText(e.status, e.detail)}`;
-const tryAgain = (text: string, e: unknown) => `${text} ${e instanceof HttpError ? `${codeText(e.status, e.detail)} ` : ""}Попробуйте ещё раз.`;
+
+/**
+ * Every number a visitor can see. What each one means stays in these comments, so it never reaches the page.
+ * Three digits instead (502, 413) come from a proxy or the dev server in front of the app.
+ */
+export const ERROR_NUMBERS = {
+  // The app answered with an error: docker compose logs --tail 100 app
+  server: {
+    other: 10, // not listed here, the log has the full text
+    ENOSPC: 11, // no disk space left
+    EACCES: 12, // no right to write to the photo folder
+    gaierror: 13, // the database is not found: the db container is stopped
+  },
+  // The photo check could not run: docker compose logs --tail 100 worker
+  check: {
+    other: 20, // not listed here
+    deadline: 21, // no usable answer from the language model for 90 seconds
+    llm_401: 22, // CommandCode refused the key
+    llm_402: 23, // no money on the CommandCode account
+    llm_403: 24, // CommandCode refused access
+    internal: 25, // the worker crashed
+  },
+  // The picture failed: docker compose logs --tail 100 worker
+  job: {
+    other: 30, // not listed here
+    no_credits: 31, // no credits left at kie.ai
+    provider_auth: 32, // kie.ai refused the key
+    provider_rejected: 33, // kie.ai refused the task
+    provider_failed: 34, // the task failed at kie.ai or its result is unusable
+    submit_unknown: 35, // no telling whether kie.ai took the task, so it is not repeated by itself
+    deadline: 36, // no result in 7 minutes
+    download_failed: 37, // the picture is ready but did not download in time
+    internal: 38, // the worker crashed
+  },
+};
+const inTable = (table: Record<string, number>, name: string | null) => (name ? ` (ошибка ${table[name] ?? table.other})` : "");
+const fromAnswer = (e: HttpError) => (e.detail ? inTable(ERROR_NUMBERS.server, e.detail) : ` (ошибка ${e.status})`);
+const failed = (e: HttpError) => `Что-то пошло не так на нашей стороне${fromAnswer(e)}.`;
+const tryAgain = (text: string, e: unknown) => `${text}${e instanceof HttpError ? fromAnswer(e) : ""}. Попробуйте ещё раз.`;
 
 const LIMITS: Record<string, string> = {
   ip_limit: "С этого адреса сегодня заказано слишком много снимков. Попробуйте завтра.",
@@ -93,7 +127,12 @@ export function rejectProblems(reason: string | null): Problems {
   return { form: `${title}. ${body}` };
 }
 
-export const jobErrorText = (error: string | null) => (error === "no_credits" || error === "provider_auth" ? UNAVAILABLE : "Этот снимок не получился. Попробуйте ещё раз.");
+export function jobErrorText(error: string | null) {
+  const number = inTable(ERROR_NUMBERS.job, error);
+  return error === "no_credits" || error === "provider_auth" ? `Сервис временно недоступен${number}. Попробуйте чуть позже.` : `Этот снимок не получился${number}. Попробуйте ещё раз.`;
+}
+
+export const checkErrorText = (error: string | null) => `Это сбой на нашей стороне${inTable(ERROR_NUMBERS.check, error)}, ваши фото тут ни при чём. Они на месте, проверку можно повторить.`;
 
 export function orderErrorText(e: unknown) {
   if (!(e instanceof HttpError)) return `${OFFLINE} Попробуйте ещё раз.`;
@@ -105,10 +144,10 @@ export function orderErrorText(e: unknown) {
 
 export function deleteErrorText(e: unknown) {
   if (e instanceof HttpError && e.detail === "busy") return "Снимок ещё создаётся. Удалить съёмку можно, когда он будет готов.";
-  return tryAgain("Не получилось удалить.", e);
+  return tryAgain("Не получилось удалить", e);
 }
 
-export const recheckErrorText = (e: unknown) => tryAgain("Не получилось начать проверку.", e);
+export const recheckErrorText = (e: unknown) => tryAgain("Не получилось начать проверку", e);
 
 export function registerError(nickname: string, password: string) {
   if (!NICKNAME.test(nickname)) return "В нике нужно от 3 до 20 букв или цифр, латиницей или кириллицей.";

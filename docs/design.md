@@ -25,7 +25,7 @@ before `createTask`, and an unknown outcome becomes `failed(submit_unknown)`.
 ## API
 
 All JSON unless noted. A session cookie is set on the first upload, so a guest has a history with no sign-up. Errors are
-`{"detail": "<code>"}`. An unexpected failure answers 500 with the errno name or the exception's class as the code, and the page shows it. A stranger's shoot answers 404, the same as a missing one.
+`{"detail": "<code>"}`. An unexpected failure answers 500 with the errno name or the exception's class as the code, and the page shows its number from `ERROR_NUMBERS` in `web/src/errors.ts`. A stranger's shoot answers 404, the same as a missing one.
 
 | Request | Answer | Errors |
 |---|---|---|
@@ -51,7 +51,7 @@ ShootCard = { id, status, wish, created_at, cover_url, images, active }
 ```
 
 `reject_reason`: `minor`, `unsafe_photo`, `famous_person`, `photo_text`, `no_face_1`, `no_face_2`, `unsafe_wish`, `bad_wish`.
-On a `failed` shoot the same field says why the check could not run: `deadline` (no usable answer for 90 s), `llm_401`, `llm_402`, `llm_403` (the provider refused the account), `internal` (the worker crashed). The page shows these and `job.error` as the error code.
+On a `failed` shoot the same field says why the check could not run: `deadline` (no usable answer for 90 s), `llm_401`, `llm_402`, `llm_403` (the provider refused the account), `internal` (the worker crashed). The page shows these and `job.error` as numbers from the same table.
 
 `job.error`: `no_credits`, `provider_auth` (the site's own account, the visitor can only wait), `provider_rejected`,
 `provider_failed`, `submit_unknown`, `deadline`, `download_failed`, `internal`.

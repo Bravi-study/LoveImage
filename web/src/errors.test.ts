@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { createShoot, HttpError } from "./api.ts";
-import { checkFile, deleteErrorText, jobErrorText, loginErrorText, MAX_PHOTO, orderErrorText, PHOTO_LABEL, recheckErrorText, registerError, rejectProblems, rejectText, uploadProblems } from "./errors.ts";
+import { checkErrorText, checkFile, deleteErrorText, ERROR_NUMBERS, jobErrorText, loginErrorText, MAX_PHOTO, orderErrorText, PHOTO_LABEL, recheckErrorText, registerError, rejectProblems, rejectText, uploadProblems } from "./errors.ts";
 
 const http = (status: number, detail: string | null) => new HttpError(status, detail);
 const sized = (name: string, type: string, size: number) => {
@@ -32,13 +32,30 @@ test("a network failure and an unknown answer both promise the form is kept", ()
   assert.match(uploadProblems(http(418, "whatever")).form!, /на нашей стороне/);
 });
 
-test("an unknown answer shows its status and what failed", () => {
-  assert.match(uploadProblems(http(500, "ENOSPC")).form!, /Код ошибки: 500 ENOSPC\./);
-  assert.match(uploadProblems(http(502, null)).form!, /Код ошибки: 502\./);
-  assert.match(orderErrorText(http(500, "gaierror")), /Код ошибки: 500 gaierror\./);
-  assert.match(loginErrorText(http(500, null)), /Код ошибки: 500\./);
-  assert.match(deleteErrorText(http(500, "ENOSPC")), /Не получилось удалить\. Код ошибки: 500 ENOSPC\. Попробуйте/);
-  assert.match(recheckErrorText(http(502, null)), /Не получилось начать проверку\. Код ошибки: 502\. Попробуйте/);
+test("an unknown answer shows its number from the table, or its status when the app did not answer", () => {
+  assert.match(uploadProblems(http(500, "ENOSPC")).form!, /на нашей стороне \(ошибка 11\)\. Снимки/);
+  assert.match(uploadProblems(http(502, null)).form!, /\(ошибка 502\)/);
+  assert.match(orderErrorText(http(500, "gaierror")), /\(ошибка 13\)/);
+  assert.match(loginErrorText(http(500, null)), /\(ошибка 500\)/);
+  assert.equal(deleteErrorText(http(500, "ENOSPC")), "Не получилось удалить (ошибка 11). Попробуйте ещё раз.");
+  assert.equal(recheckErrorText(http(502, null)), "Не получилось начать проверку (ошибка 502). Попробуйте ещё раз.");
+});
+
+test("a failure shows a number and never its name", () => {
+  assert.equal(jobErrorText("no_credits"), "Сервис временно недоступен (ошибка 31). Попробуйте чуть позже.");
+  assert.equal(jobErrorText("provider_failed"), "Этот снимок не получился (ошибка 34). Попробуйте ещё раз.");
+  assert.equal(jobErrorText("something_new"), "Этот снимок не получился (ошибка 30). Попробуйте ещё раз.");
+  assert.equal(jobErrorText(null), "Этот снимок не получился. Попробуйте ещё раз.");
+  assert.match(checkErrorText("deadline"), /на нашей стороне \(ошибка 21\), ваши/);
+  assert.match(checkErrorText("something_new"), /\(ошибка 20\)/);
+  assert.match(checkErrorText(null), /на нашей стороне, ваши/);
+  assert.match(uploadProblems(http(500, "RuntimeError")).form!, /\(ошибка 10\)/);
+  assert.doesNotMatch(uploadProblems(http(500, "RuntimeError")).form!, /RuntimeError/);
+});
+
+test("no two failures share a number", () => {
+  const numbers = Object.values(ERROR_NUMBERS).flatMap((table) => Object.values(table));
+  assert.equal(new Set(numbers).size, numbers.length);
 });
 
 test("a network failure has no code to show", () => {

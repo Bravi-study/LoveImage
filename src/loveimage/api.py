@@ -121,7 +121,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.exception_handler(Exception)
     async def server_error(request: Request, exc: Exception) -> JSONResponse:
-        # The page shows this, so a screenshot is enough to start with. Only a name: the text can hold paths and addresses, and it still reaches the log.
+        # The page turns this into a number, so a screenshot is enough to start with. Only a name: the text can hold paths and addresses, and it still reaches the log.
         return JSONResponse({"detail": errno.errorcode.get(getattr(exc, "errno", None), type(exc).__name__)}, status_code=500)
 
     app.state.uploads = limits.IpCounter()

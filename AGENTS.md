@@ -292,8 +292,7 @@ ssh root@IP 'cut -d" " -f1,2 /etc/ssh/ssh_host_ed25519_key.pub' | gh variable se
   ssh root@IP 'cd /opt/loveimage && . ./.env && curl -s -H "Authorization: Bearer $KIE_AI_API_KEY" https://api.kie.ai/api/v1/chat/credit'
   ```
 - Логи: `docker compose logs --tail 100 worker`. Причина неудачной задачи пишется туда.
-- Код на странице «Что-то пошло не так»: число это ответ сервера. `500` с названием пришёл от приложения, полный текст в `docker compose logs --tail 100 app`: `ENOSPC` кончилось место на диске, `EACCES` нет прав на запись в папку с фото, `gaierror` приложение не находит базу (контейнер `db` остановлен). Число без названия (`502`, `413`) пришло не от приложения, а от прокси или dev-сервера перед ним.
-- Код без числа на экране неудачного снимка или проверки пришёл от воркера, подробности в `docker compose logs --tail 100 worker`. Снимок: `no_credits` кончились кредиты kie.ai, `provider_auth` kie.ai не принял ключ, остальные в [docs/design.md](docs/design.md). Проверка: `deadline` языковая модель 90 секунд не давала годного ответа, `llm_401`, `llm_402`, `llm_403` CommandCode отказал аккаунту. `internal` в обоих случаях значит, что воркер упал.
+- Номер на странице, например «(ошибка 31)». Что значит каждый номер, записано в таблице `ERROR_NUMBERS` в `web/src/errors.ts`. `1x` ответило приложение, полный текст в `docker compose logs --tail 100 app`. `2x` сбой проверки фото, `3x` сбой снимка, подробности в `docker compose logs --tail 100 worker`. Три цифры (`502`, `413`) пришли не от приложения, а от прокси или dev-сервера перед ним.
 
 ### Известные ловушки
 
