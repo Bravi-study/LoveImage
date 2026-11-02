@@ -16,6 +16,7 @@ const NICKNAME = /^[0-9A-Za-zА-Яа-яЁё]{3,20}$/;
 /**
  * Every number a visitor can see. What each one means stays in these comments, so it never reaches the page.
  * Three digits instead (502, 413) come from a proxy or the dev server in front of the app.
+ * docs/errors.md repeats this table for people: change both.
  */
 export const ERROR_NUMBERS = {
   // The app answered with an error: docker compose logs --tail 100 app

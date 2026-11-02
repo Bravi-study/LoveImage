@@ -292,7 +292,7 @@ ssh root@IP 'cut -d" " -f1,2 /etc/ssh/ssh_host_ed25519_key.pub' | gh variable se
   ssh root@IP 'cd /opt/loveimage && . ./.env && curl -s -H "Authorization: Bearer $KIE_AI_API_KEY" https://api.kie.ai/api/v1/chat/credit'
   ```
 - Логи: `docker compose logs --tail 100 worker`. Причина неудачной задачи пишется туда.
-- Номер на странице, например «(ошибка 31)». Что значит каждый номер, записано в таблице `ERROR_NUMBERS` в `web/src/errors.ts`. `1x` ответило приложение, полный текст в `docker compose logs --tail 100 app`. `2x` сбой проверки фото, `3x` сбой снимка, подробности в `docker compose logs --tail 100 worker`. Три цифры (`502`, `413`) пришли не от приложения, а от прокси или dev-сервера перед ним.
+- Номер на странице, например «(ошибка 31)»: что он значит и где искать подробности, записано в [docs/errors.md](docs/errors.md).
 
 ### Известные ловушки
 
