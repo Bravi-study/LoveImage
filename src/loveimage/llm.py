@@ -118,7 +118,7 @@ async def analyze(http: httpx.AsyncClient, settings: Settings, photo_1: bytes, p
     except httpx.TransportError as e:
         raise Transient(repr(e)) from e
     if response.status_code in (401, 402, 403):
-        raise Fatal(f"HTTP {response.status_code}")
+        raise Fatal(f"llm_{response.status_code}")
     if response.status_code != 200:
         raise Transient(f"HTTP {response.status_code}: {response.text[:300]}")
     try:

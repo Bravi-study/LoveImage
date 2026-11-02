@@ -51,6 +51,7 @@ ShootCard = { id, status, wish, created_at, cover_url, images, active }
 ```
 
 `reject_reason`: `minor`, `unsafe_photo`, `famous_person`, `photo_text`, `no_face_1`, `no_face_2`, `unsafe_wish`, `bad_wish`.
+On a `failed` shoot the same field says why the check could not run: `deadline` (no usable answer for 90 s), `llm_401`, `llm_402`, `llm_403` (the provider refused the account), `internal` (the worker crashed). The page shows these and `job.error` as the error code.
 
 `job.error`: `no_credits`, `provider_auth` (the site's own account, the visitor can only wait), `provider_rejected`,
 `provider_failed`, `submit_unknown`, `deadline`, `download_failed`, `internal`.

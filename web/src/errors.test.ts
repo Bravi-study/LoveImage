@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { createShoot, HttpError } from "./api.ts";
-import { checkFile, deleteErrorText, jobErrorText, loginErrorText, MAX_PHOTO, orderErrorText, PHOTO_LABEL, registerError, rejectProblems, rejectText, uploadProblems } from "./errors.ts";
+import { checkFile, deleteErrorText, jobErrorText, loginErrorText, MAX_PHOTO, orderErrorText, PHOTO_LABEL, recheckErrorText, registerError, rejectProblems, rejectText, uploadProblems } from "./errors.ts";
 
 const http = (status: number, detail: string | null) => new HttpError(status, detail);
 const sized = (name: string, type: string, size: number) => {
@@ -37,6 +37,13 @@ test("an unknown answer shows its status and what failed", () => {
   assert.match(uploadProblems(http(502, null)).form!, /Код ошибки: 502\./);
   assert.match(orderErrorText(http(500, "gaierror")), /Код ошибки: 500 gaierror\./);
   assert.match(loginErrorText(http(500, null)), /Код ошибки: 500\./);
+  assert.match(deleteErrorText(http(500, "ENOSPC")), /Не получилось удалить\. Код ошибки: 500 ENOSPC\. Попробуйте/);
+  assert.match(recheckErrorText(http(502, null)), /Не получилось начать проверку\. Код ошибки: 502\. Попробуйте/);
+});
+
+test("a network failure has no code to show", () => {
+  assert.equal(deleteErrorText(new TypeError("x")), "Не получилось удалить. Попробуйте ещё раз.");
+  assert.equal(recheckErrorText(new TypeError("x")), "Не получилось начать проверку. Попробуйте ещё раз.");
 });
 
 test("the service's own account problems are not the visitor's to fix", () => {

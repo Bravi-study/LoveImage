@@ -11,7 +11,7 @@ export const isBusy = (shoot: Shoot) => shoot.status === "uploaded" || shoot.job
 
 export type View =
   | { name: "checking" }
-  | { name: "check_failed" }
+  | { name: "check_failed"; code: string | null }
   | { name: "rejected"; reason: string | null }
   | { name: "no_jobs" }
   | { name: "first_picture" }
@@ -19,7 +19,7 @@ export type View =
 
 export function pickView(shoot: Shoot, selected: number | null): View {
   if (shoot.status === "uploaded") return { name: "checking" };
-  if (shoot.status === "failed") return { name: "check_failed" };
+  if (shoot.status === "failed") return { name: "check_failed", code: shoot.reject_reason };
   if (shoot.status === "rejected") return { name: "rejected", reason: shoot.reject_reason };
   const latest = shoot.jobs.at(-1);
   if (!latest) return { name: "no_jobs" };

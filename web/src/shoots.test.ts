@@ -20,7 +20,7 @@ test("polling goes on only while something can still change", () => {
 
 test("the view follows the status of the shoot", () => {
   assert.deepEqual(pickView(shoot("uploaded"), null), { name: "checking" });
-  assert.deepEqual(pickView(shoot("failed"), null), { name: "check_failed" });
+  assert.deepEqual(pickView(shoot("failed", [], "deadline"), null), { name: "check_failed", code: "deadline" });
   assert.deepEqual(pickView(shoot("rejected", [], "minor"), null), { name: "rejected", reason: "minor" });
   assert.deepEqual(pickView(shoot("ready"), null), { name: "no_jobs" });
 });

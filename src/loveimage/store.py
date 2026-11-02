@@ -47,7 +47,7 @@ async def reopen_shoot(pool, shoot_id):
     """Returns False when the shoot is not in the failed state."""
     return bool(
         await pool.fetchval(
-            """UPDATE shoots SET status = 'uploaded', run_at = now(), deadline_at = now() + interval '90 seconds'
+            """UPDATE shoots SET status = 'uploaded', reject_reason = NULL, run_at = now(), deadline_at = now() + interval '90 seconds'
                WHERE id = $1 AND status = 'failed' RETURNING true""",
             shoot_id,
         )

@@ -14,7 +14,9 @@ const KEPT = "Снимки и текст на месте, попробуйте �
 const UNAVAILABLE = "Сервис временно недоступен. Попробуйте чуть позже.";
 const NICKNAME = /^[0-9A-Za-zА-Яа-яЁё]{3,20}$/;
 /** A status alone means something in front of the app answered: a proxy or the dev server. */
-const failed = (e: HttpError) => `Что-то пошло не так на нашей стороне. Код ошибки: ${[e.status, e.detail].filter(Boolean).join(" ")}.`;
+export const codeText = (...code: (number | string | null)[]) => `Код ошибки: ${code.filter(Boolean).join(" ")}.`;
+const failed = (e: HttpError) => `Что-то пошло не так на нашей стороне. ${codeText(e.status, e.detail)}`;
+const tryAgain = (text: string, e: unknown) => `${text} ${e instanceof HttpError ? `${codeText(e.status, e.detail)} ` : ""}Попробуйте ещё раз.`;
 
 const LIMITS: Record<string, string> = {
   ip_limit: "С этого адреса сегодня заказано слишком много снимков. Попробуйте завтра.",
@@ -103,8 +105,10 @@ export function orderErrorText(e: unknown) {
 
 export function deleteErrorText(e: unknown) {
   if (e instanceof HttpError && e.detail === "busy") return "Снимок ещё создаётся. Удалить съёмку можно, когда он будет готов.";
-  return "Не получилось удалить. Попробуйте ещё раз.";
+  return tryAgain("Не получилось удалить.", e);
 }
+
+export const recheckErrorText = (e: unknown) => tryAgain("Не получилось начать проверку.", e);
 
 export function registerError(nickname: string, password: string) {
   if (!NICKNAME.test(nickname)) return "В нике нужно от 3 до 20 букв или цифр, латиницей или кириллицей.";

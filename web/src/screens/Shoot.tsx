@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router";
 
 import * as api from "../api";
 import type { Job, Shoot } from "../api";
-import { deleteErrorText, jobErrorText, orderErrorText, PHOTO_LABEL, rejectProblems, rejectText } from "../errors";
+import { codeText, deleteErrorText, jobErrorText, orderErrorText, PHOTO_LABEL, recheckErrorText, rejectProblems, rejectText } from "../errors";
 import { useSession } from "../Layout";
 import { isActive, pickView, statusText } from "../shoots";
 import { ALERT, BUTTON, BUTTON_QUIET, CheckIcon, DeleteButton, DownloadIcon, LINK, PhotoPair, SHELL, Title } from "../ui";
@@ -134,8 +134,8 @@ export function ShootScreen() {
     setProblem(null);
     try {
       setShoot(await api.repeatAnalysis(id));
-    } catch {
-      setProblem("Не получилось начать проверку. Попробуйте ещё раз.");
+    } catch (e) {
+      setProblem(recheckErrorText(e));
       void reload();
     } finally {
       setOrdering(false);
@@ -209,6 +209,7 @@ export function ShootScreen() {
       {view.name === "check_failed" && (
         <Note title="Не получилось проверить снимки">
           <p className="mt-5 text-lg leading-relaxed">Это сбой на нашей стороне, ваши фото тут ни при чём. Они на месте, проверку можно повторить.</p>
+          {view.code && <p className="mt-3 text-sm text-ink-soft">{codeText(view.code)}</p>}
           <button type="button" disabled={ordering} onClick={() => void recheck()} className={`${BUTTON} mt-8 w-full sm:w-auto`}>
             Проверить ещё раз
           </button>
@@ -246,6 +247,7 @@ export function ShootScreen() {
               <div className={`grid aspect-[3/4] place-items-center bg-blush-soft p-6 ${PRINT_H}`}>
                 <div className="max-w-md text-center">
                   <p className="font-display text-[2rem] leading-tight text-wine lg:text-5xl">{jobErrorText(job.error)}</p>
+                  {job.error && <p className="mt-3 text-sm text-ink-soft">{codeText(job.error)}</p>}
                   <button type="button" disabled={ordering || running} onClick={() => void order(job.can_retry ? job.variant : undefined)} className={`${BUTTON} mt-7 w-full sm:w-auto`}>
                     {job.can_retry ? "Попробовать ещё раз" : "Заказать новый вариант"}
                   </button>

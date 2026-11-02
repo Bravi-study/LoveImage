@@ -198,7 +198,7 @@ async def test_expired_shoot_fails_without_a_call(pool, run, uploaded):
     await pool.execute("UPDATE shoots SET deadline_at = now() - interval '1 second' WHERE id = $1", shoot_id)
     called = []
     await run(lambda r: called.append(r) or reply())
-    assert (await state(pool, shoot_id))["status"] == "failed"
+    assert tuple(await state(pool, shoot_id))[:2] == ("failed", "deadline")
     assert called == []
 
 
@@ -206,7 +206,7 @@ async def test_account_problem_fails_at_once_and_keeps_the_photos(pool, run, upl
     shoot_id = await uploaded()
     await run(lambda r: httpx.Response(401))
     row = await state(pool, shoot_id)
-    assert (row["status"], row["parked"]) == ("failed", True)
+    assert (row["status"], row["reject_reason"], row["parked"]) == ("failed", "llm_401", True)
     assert (settings.shoot_dir(shoot_id) / "photo2.jpg").exists()
 
 
@@ -217,7 +217,7 @@ async def test_failed_analysis_can_be_requested_again(pool, client, run, uploade
     r = await client.post(f"/api/shoots/{shoot_id}/analysis")
 
     assert r.status_code == 200
-    assert r.json()["status"] == "uploaded"
+    assert (r.json()["status"], r.json()["reject_reason"]) == ("uploaded", None)
     assert (await store.claim_shoot(pool))["id"] == shoot_id
 
 
@@ -246,5 +246,6 @@ async def test_unexpected_error_in_a_handler_fails_the_shoot(pool, ctx, uploaded
     async with asyncio.timeout(5):
         while (await state(pool, shoot_id))["status"] != "failed":
             await asyncio.sleep(0.05)
+    assert (await state(pool, shoot_id))["reject_reason"] == "internal"
     stop.set()
     await loop

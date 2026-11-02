@@ -19,7 +19,7 @@ async def _read_photos(ctx, shoot_id) -> list[bytes]:
 async def analyze(ctx, row):
     shoot_id = row["id"]
     if row["expired"]:
-        await store.finish_shoot(ctx.pool, shoot_id, "failed")
+        await store.finish_shoot(ctx.pool, shoot_id, "failed", "deadline")
         return
     small = [await imaging.normalize(jpeg, max_side=LLM_IMAGE_SIDE) for jpeg in await _read_photos(ctx, shoot_id)]
     try:
@@ -29,7 +29,7 @@ async def analyze(ctx, row):
         await store.retry_shoot_later(ctx.pool, shoot_id, RETRY_DELAY)
     except llm.Fatal as e:
         log.error("analysis of %s failed: %s", shoot_id, e)
-        await store.finish_shoot(ctx.pool, shoot_id, "failed")
+        await store.finish_shoot(ctx.pool, shoot_id, "failed", str(e))
     else:
         reason = verdict.reject_reason(row["wish"])
         if reason:
@@ -53,7 +53,7 @@ async def analyze(ctx, row):
 
 
 async def analysis_crashed(ctx, row):
-    await store.finish_shoot(ctx.pool, row["id"], "failed")
+    await store.finish_shoot(ctx.pool, row["id"], "failed", "internal")
 
 
 async def handle_job(ctx, row):
