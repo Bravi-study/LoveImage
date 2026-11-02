@@ -1,0 +1,13 @@
+#!/bin/bash
+# Template for /usr/local/bin/loveimage-backup, run nightly by cron. Needs age and an rclone remote called "backup".
+# The photos are not backed up: they are private and can be made again, the accounts and history cannot.
+set -euo pipefail
+cd /opt/loveimage
+name="loveimage-$(date -u +%F).sql.zst.age"
+tmp="/var/backups/$name.tmp"
+trap 'rm -f "$tmp"' EXIT
+# Only a finished dump gets the real name: one that died midway must not replace today's good copy.
+docker compose exec -T db pg_dump -U loveimage loveimage | zstd -q | age -r "$(cat /root/.loveimage-backup.pub)" > "$tmp"
+mv "$tmp" "/var/backups/$name"
+rclone copy "/var/backups/$name" backup:loveimage/
+find /var/backups -name 'loveimage-*.age' -mtime +7 -delete

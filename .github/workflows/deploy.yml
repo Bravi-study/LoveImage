@@ -1,0 +1,66 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: loveimage_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:test@localhost/loveimage_test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+      - name: Backend tests
+        run: uv run --frozen pytest
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Web tests
+        working-directory: web
+        run: |
+          npx --yes pnpm@12.16.1 install --frozen-lockfile
+          npx --yes pnpm@12.16.1 test
+
+  deploy:
+    needs: test
+    # Stays off until the server exists: the setup in AGENTS.md sets these repository variables.
+    if: github.event_name == 'push' && vars.DEPLOY_HOST != '' && vars.DEPLOY_HOST_KEY != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # A new deploy waits for the running one instead of racing it on the server.
+    concurrency: deploy
+    steps:
+      # This key can only start /usr/local/bin/loveimage-deploy on the server, whatever is asked.
+      # shortcut: it deploys the tip of main, so a bad commit pushed while a good one is being tested
+      # can skip its own tests; pass the tested commit to the script if pushes ever come that close.
+      - name: Start the deploy on the server
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_HOST_KEY: ${{ vars.DEPLOY_HOST_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          (umask 077; printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key)
+          printf '%s %s\n' "$DEPLOY_HOST" "$DEPLOY_HOST_KEY" > ~/.ssh/known_hosts
+          ssh -T -i ~/.ssh/deploy_key -o ServerAliveInterval=15 "root@$DEPLOY_HOST"

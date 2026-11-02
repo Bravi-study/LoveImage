@@ -1,0 +1,10 @@
+*
+!pyproject.toml
+!uv.lock
+!.python-version
+!src/
+!migrations/
+!web/
+web/node_modules/
+web/dist/
+**/__pycache__/

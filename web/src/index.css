@@ -1,0 +1,185 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ivory: #f6efe3;
+  --color-paper: #fcf8f1;
+  --color-wine: #4b0f1f;
+  --color-wine-deep: #340912;
+  --color-rosewood: #7d2b3c;
+  --color-blush: #eccfc3;
+  --color-blush-soft: #f3e1d7;
+  --color-ink: #2b1a17;
+  --color-ink-soft: #69544d;
+  --color-line: #dccdb9;
+  --font-sans: "Manrope Variable", system-ui, sans-serif;
+  --font-display: "Cormorant Variable", "Times New Roman", serif;
+}
+
+html {
+  background: var(--color-ivory);
+  overflow-x: clip;
+}
+
+body {
+  background: var(--color-ivory);
+  color: var(--color-ink);
+  overflow-x: clip;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Film grain over the whole page, photographs included. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-rosewood);
+  outline-offset: 3px;
+}
+
+/* Headings and main take focus from code, for screen readers. They are not controls and need no ring. */
+[tabindex="-1"]:focus-visible {
+  outline: none;
+}
+
+.on-dark :focus-visible {
+  outline-color: var(--color-ivory);
+}
+
+/* Room around a problem scrolled into view, so the button under it shows too. */
+[data-problem] {
+  scroll-margin: 6.5rem 0;
+}
+
+/* Two tones, so the ring shows on any photograph. */
+.slot:has(input:focus-visible) {
+  outline: 3px solid var(--color-ivory);
+  outline-offset: -7px;
+  box-shadow: inset 0 0 0 4px var(--color-wine);
+}
+
+/* The half of the example picture waiting for its second photo. */
+.ghost {
+  filter: grayscale(1) sepia(0.4) contrast(0.85);
+  opacity: 0.22;
+}
+
+/* The joining: two portraits meet, then turn into the two halves of one picture. */
+@keyframes meet-left {
+  from {
+    transform: translateX(-16px) rotate(-1.5deg);
+  }
+}
+@keyframes meet-right {
+  from {
+    transform: translateX(16px) rotate(1.5deg);
+  }
+}
+@keyframes portrait-out {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes seal-in {
+  0%,
+  75% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+}
+/* Above the photo, so the two halves keep the seam and the same picture lines up across it. */
+.anim-meet-left {
+  animation: meet-left 1.3s cubic-bezier(0.25, 0.7, 0.2, 1) 0.35s backwards;
+}
+.anim-meet-right {
+  animation: meet-right 1.3s cubic-bezier(0.25, 0.7, 0.2, 1) 0.35s backwards;
+}
+.anim-portrait {
+  animation: portrait-out 2.5s ease-in-out both;
+}
+.anim-seal {
+  animation: seal-in 2.5s ease-out both;
+}
+
+/* The waiting room: a slow safelight and two prints that never quite settle. */
+@keyframes drift-left {
+  50% {
+    transform: translateX(-5px);
+  }
+}
+@keyframes drift-right {
+  50% {
+    transform: translateX(5px);
+  }
+}
+@keyframes develop {
+  50% {
+    filter: sepia(0.15) saturate(0.95) brightness(1);
+  }
+}
+@keyframes glow {
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes pulse-dot {
+  50% {
+    opacity: 0.25;
+  }
+}
+.anim-drift-left {
+  animation: drift-left 9s ease-in-out infinite;
+}
+.anim-drift-right {
+  animation: drift-right 9s ease-in-out infinite;
+}
+.anim-develop {
+  filter: sepia(0.35) saturate(0.75) brightness(0.72);
+  animation: develop 7s ease-in-out infinite;
+}
+.anim-glow {
+  opacity: 0.35;
+  animation: glow 7s ease-in-out infinite;
+}
+.anim-pulse-dot {
+  animation: pulse-dot 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-meet-left,
+  .anim-meet-right,
+  .anim-seal,
+  .anim-drift-left,
+  .anim-drift-right,
+  .anim-glow,
+  .anim-pulse-dot {
+    animation: none;
+  }
+  .anim-portrait {
+    display: none;
+  }
+  .anim-develop {
+    animation: none;
+    filter: sepia(0.2) saturate(0.9) brightness(0.9);
+  }
+  * {
+    transition: none !important;
+  }
+}

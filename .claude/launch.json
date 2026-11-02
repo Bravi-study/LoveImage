@@ -1,0 +1,39 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "fake",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["run", "uvicorn", "--app-dir", "scripts", "fake_providers:app", "--port", "9110", "--log-level", "warning"],
+      "port": 9110
+    },
+    {
+      "name": "api-fake",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "PGUSER=$(id -un) exec uv run --env-file .env.fake uvicorn --factory loveimage.api:create_app --port 8010 --log-level warning"],
+      "port": 8010
+    },
+    {
+      "name": "worker-fake",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "PGUSER=$(id -un) exec uv run --env-file .env.fake python -m loveimage.worker"]
+    },
+    {
+      "name": "api-live",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "PGUSER=$(id -un) exec uv run uvicorn --factory loveimage.api:create_app --port 8010 --log-level warning"],
+      "port": 8010
+    },
+    {
+      "name": "worker-live",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "PGUSER=$(id -un) exec uv run python -m loveimage.worker"]
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "pnpm@12.16.1", "--dir", "web", "run", "dev"],
+      "port": 5183
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+[project]
+name = "loveimage"
+version = "0.1.0"
+requires-python = ">=3.15,<3.16"
+dependencies = [
+    "fastapi==0.162.0",
+    "uvicorn==0.54.0",
+    "asyncpg==0.32.0",
+    "httpx==0.28.1",
+    "pydantic==2.14.2",
+    "pydantic-settings==2.16.2",
+    "pillow==13.0.0",
+    "pillow-heif==1.8.1",
+    "python-multipart==0.0.33",
+]
+
+[dependency-groups]
+dev = ["pytest", "anyio"]
+
+[build-system]
+requires = ["uv_build>=0.13,<0.14"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["scripts"]

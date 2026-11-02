@@ -1,0 +1,24 @@
+#!/bin/sh
+# Template for /usr/local/bin/loveimage-deploy on the server. The only thing the deploy key may run.
+set -e
+cd /opt/loveimage
+git fetch -q origin main
+# .env holds the only copy of DB_PASSWORD: a commit must never replace it.
+if git cat-file -e FETCH_HEAD:.env 2>/dev/null; then
+  echo '.env is in git, deploy stopped' >&2
+  exit 1
+fi
+git reset -q --hard FETCH_HEAD
+git clean -fdq -e .env
+git log -1 --format='Deploying %h %s'
+# Only these two: a bare "up -d" would start Caddy and open ports 80 and 443 before the site is ready.
+docker compose up -d --build app worker
+curl -fsS --retry 30 --retry-all-errors --retry-delay 2 -o /dev/null http://127.0.0.1:8000/
+restarts() { docker inspect -f '{{.RestartCount}}' $(docker compose ps -q app worker); }
+before=$(restarts)
+sleep 10
+if [ "$(restarts)" != "$before" ]; then
+  echo 'app or worker keeps restarting' >&2
+  exit 1
+fi
+docker compose ps app worker
