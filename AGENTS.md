@@ -292,6 +292,7 @@ ssh root@IP 'cut -d" " -f1,2 /etc/ssh/ssh_host_ed25519_key.pub' | gh variable se
   ssh root@IP 'cd /opt/loveimage && . ./.env && curl -s -H "Authorization: Bearer $KIE_AI_API_KEY" https://api.kie.ai/api/v1/chat/credit'
   ```
 - Логи: `docker compose logs --tail 100 worker`. Причина неудачной задачи пишется туда.
+- Код на странице «Что-то пошло не так»: число это ответ сервера. `500` с названием пришёл от приложения, полный текст в `docker compose logs --tail 100 app`: `ENOSPC` кончилось место на диске, `EACCES` нет прав на запись в папку с фото, `gaierror` приложение не находит базу (контейнер `db` остановлен). Число без названия (`502`, `413`) пришло не от приложения, а от прокси или dev-сервера перед ним.
 
 ### Известные ловушки
 
