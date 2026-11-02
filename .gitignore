@@ -1,3 +1,4 @@
+.env
 deploy_key*
 data/
 web/dist/
