@@ -32,6 +32,13 @@ test("a network failure and an unknown answer both promise the form is kept", ()
   assert.match(uploadProblems(http(418, "whatever")).form!, /на нашей стороне/);
 });
 
+test("an unknown answer shows its status and what failed", () => {
+  assert.match(uploadProblems(http(500, "ENOSPC")).form!, /Код ошибки: 500 ENOSPC\./);
+  assert.match(uploadProblems(http(502, null)).form!, /Код ошибки: 502\./);
+  assert.match(orderErrorText(http(500, "gaierror")), /Код ошибки: 500 gaierror\./);
+  assert.match(loginErrorText(http(500, null)), /Код ошибки: 500\./);
+});
+
 test("the service's own account problems are not the visitor's to fix", () => {
   assert.match(jobErrorText("no_credits"), /временно недоступен/);
   assert.match(jobErrorText("provider_auth"), /временно недоступен/);

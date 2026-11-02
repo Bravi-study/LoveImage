@@ -25,7 +25,7 @@ before `createTask`, and an unknown outcome becomes `failed(submit_unknown)`.
 ## API
 
 All JSON unless noted. A session cookie is set on the first upload, so a guest has a history with no sign-up. Errors are
-`{"detail": "<code>"}`. A stranger's shoot answers 404, the same as a missing one.
+`{"detail": "<code>"}`. An unexpected failure answers 500 with the errno name or the exception's class as the code, and the page shows it. A stranger's shoot answers 404, the same as a missing one.
 
 | Request | Answer | Errors |
 |---|---|---|

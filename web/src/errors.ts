@@ -13,6 +13,8 @@ const OFFLINE = "Нет связи с сервером.";
 const KEPT = "Снимки и текст на месте, попробуйте ещё раз.";
 const UNAVAILABLE = "Сервис временно недоступен. Попробуйте чуть позже.";
 const NICKNAME = /^[0-9A-Za-zА-Яа-яЁё]{3,20}$/;
+/** A status alone means something in front of the app answered: a proxy or the dev server. */
+const failed = (e: HttpError) => `Что-то пошло не так на нашей стороне. Код ошибки: ${[e.status, e.detail].filter(Boolean).join(" ")}.`;
 
 const LIMITS: Record<string, string> = {
   ip_limit: "С этого адреса сегодня заказано слишком много снимков. Попробуйте завтра.",
@@ -36,7 +38,7 @@ export function uploadProblems(e: unknown): Problems {
   if (e.detail === "too_large") return { form: "Один из снимков больше 25 МБ. Замените его снимком поменьше." };
   if (e.detail === "invalid") return { form: "Нужны оба снимка и отмеченное согласие." };
   if (e.detail && LIMITS[e.detail]) return { form: LIMITS[e.detail] };
-  return { form: `Что-то пошло не так на нашей стороне. ${KEPT}` };
+  return { form: `${failed(e)} ${KEPT}` };
 }
 
 const noFace = (label: string) => ({
@@ -96,7 +98,7 @@ export function orderErrorText(e: unknown) {
   if (e.detail && LIMITS[e.detail]) return LIMITS[e.detail];
   if (e.detail === "not_retryable") return "Этот вариант повторить уже нельзя. Закажите новый.";
   if (e.detail === "not_ready") return "Снимки ещё проверяются. Подождите немного.";
-  return "Что-то пошло не так на нашей стороне. Попробуйте ещё раз.";
+  return `${failed(e)} Попробуйте ещё раз.`;
 }
 
 export function deleteErrorText(e: unknown) {
@@ -117,5 +119,5 @@ export function loginErrorText(e: unknown) {
   if (e.detail === "nickname_taken") return "Такой ник уже занят. Выберите другой или войдите, если он ваш.";
   if (e.detail === "locked") return "Слишком много неудачных попыток. Попробуйте через 15 минут.";
   if (e.detail === "invalid") return "Проверьте ник и пароль: ник от 3 до 20 букв или цифр, пароль от 6 до 128 символов.";
-  return "Что-то пошло не так на нашей стороне. Попробуйте ещё раз.";
+  return `${failed(e)} Попробуйте ещё раз.`;
 }

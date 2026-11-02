@@ -1,3 +1,4 @@
+import errno
 import io
 import uuid
 
@@ -52,6 +53,24 @@ async def test_photos_do_not_stay_behind_a_failed_insert(client, send, settings,
     with pytest.raises(RuntimeError):
         await send(client)
     assert not list((settings.data_dir / "shoots").iterdir())
+
+
+@pytest.mark.parametrize(
+    "failure, code",
+    [(OSError(errno.ENOSPC, "no space in /secret/path"), "ENOSPC"), (RuntimeError("postgresql://user:secret@db"), "RuntimeError")],
+)
+async def test_an_unexpected_failure_names_what_failed_and_nothing_else(pool, settings, send, monkeypatch, failure, code):
+    async def fail(*args):
+        raise failure
+
+    monkeypatch.setattr(store, "create_shoot", fail)
+    app = api.create_app(settings)
+    app.state.pool = pool
+    transport = httpx.ASGITransport(app=app, raise_app_exceptions=False)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        r = await send(client)
+    assert r.status_code == 500
+    assert r.json() == {"detail": code}
 
 
 async def test_consent_sent_as_a_file_is_refused(client, photos, pool, settings):

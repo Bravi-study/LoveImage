@@ -1,4 +1,5 @@
 import asyncio
+import errno
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -117,6 +118,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def invalid_request(request: Request, exc: RequestValidationError) -> JSONResponse:
         # The default answer echoes the input: a password back at the sender, and a lone surrogate in it crashes the encoder.
         return JSONResponse({"detail": "invalid"}, status_code=422)
+
+    @app.exception_handler(Exception)
+    async def server_error(request: Request, exc: Exception) -> JSONResponse:
+        # The page shows this, so a screenshot is enough to start with. Only a name: the text can hold paths and addresses, and it still reaches the log.
+        return JSONResponse({"detail": errno.errorcode.get(getattr(exc, "errno", None), type(exc).__name__)}, status_code=500)
 
     app.state.uploads = limits.IpCounter()
     app.state.images = limits.IpCounter()
